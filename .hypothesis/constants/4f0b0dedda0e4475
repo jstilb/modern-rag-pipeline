@@ -1,0 +1,4 @@
+# file: /Users/jstilb/Desktop/projects/portfolio/modern-rag-pipeline/src/retrieval/store.py
+# hypothesis_version: 6.151.5
+
+[0.0, 1.0, 'chunk_index', 'cosine', 'distances', 'doc_id', 'documents', 'hnsw:space', 'metadatas', 'semantic', 'source', 'token_count']

@@ -1,0 +1,4 @@
+# file: /Users/jstilb/Desktop/projects/portfolio/modern-rag-pipeline/src/rag/cli.py
+# hypothesis_version: 6.151.5
+
+[8000, '+', '-', '--host', '--port', '--query', '--top-k', '0.0.0.0', '=', 'Command to run', 'Files to ingest', 'Host', 'Ingest documents', 'JSON output:', 'Number of chunks', 'Port', 'Query the pipeline', 'Query to demo', 'Question to ask', 'RAG', 'Run a complete demo', 'Start API server', '[3/3] Results:', '__main__', 'answer', 'chunking', 'command', 'demo', 'evaluation', 'files', 'guide', 'hybrid-search.md', 'ingest', 'latency_ms', 'method', 'model', 'overview', 'query', 'question', 'rag-overview.md', 'reference', 'retrieval', 'score', 'serve', 'source', 'source_count', 'sources', 'src.api.app:app', 'topic', 'type', 'vector-databases.md', 'vector_db']

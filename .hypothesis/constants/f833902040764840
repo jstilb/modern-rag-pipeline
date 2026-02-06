@@ -1,0 +1,4 @@
+# file: /Users/jstilb/Desktop/projects/portfolio/modern-rag-pipeline/src/evaluation/metrics.py
+# hypothesis_version: 6.151.5
+
+[0.0, 1.0, 'a', 'after', 'all', 'an', 'and', 'any', 'are', 'as', 'at', 'be', 'because', 'been', 'before', 'being', 'both', 'but', 'by', 'can', 'could', 'did', 'do', 'does', 'during', 'each', 'either', 'every', 'few', 'for', 'from', 'had', 'has', 'have', 'how', 'in', 'into', 'is', 'it', 'its', 'just', 'may', 'might', 'more', 'most', 'neither', 'no', 'nor', 'not', 'of', 'on', 'only', 'or', 'other', 'own', 'same', 'shall', 'should', 'so', 'some', 'such', 'than', 'that', 'the', 'these', 'this', 'those', 'through', 'to', 'too', 'very', 'was', 'were', 'what', 'when', 'where', 'which', 'who', 'why', 'will', 'with', 'would', 'yet']

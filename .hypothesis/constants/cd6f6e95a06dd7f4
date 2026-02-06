@@ -1,0 +1,4 @@
+# file: /Users/jstilb/Desktop/projects/portfolio/modern-rag-pipeline/src/rag/config.py
+# hypothesis_version: 6.151.5
+
+[0.1, 0.3, 0.7, 384, 512, 1024, 8000, '.chroma_data', '0.0.0.0', 'API host', 'API port', 'Chunking strategy', 'Embedding model name', 'LLM model name', 'LLM temperature', 'OpenAI API key', 'RAG_', 'Retrieval strategy', 'env_prefix', 'fixed', 'gpt-4o-mini', 'hybrid', 'keyword', 'mock', 'mode', 'production', 'rag_documents', 'recursive', 'semantic', 'sliding_window']

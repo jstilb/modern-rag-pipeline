@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  rag-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - RAG_MODE=mock
+      - RAG_API_HOST=0.0.0.0
+      - RAG_API_PORT=8000
+    volumes:
+      - chroma_data:/app/.chroma_data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:8000/health'); r.raise_for_status()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  chroma_data:

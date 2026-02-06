@@ -1,0 +1,4 @@
+# file: /Users/jstilb/Desktop/projects/portfolio/modern-rag-pipeline/src/api/app.py
+# hypothesis_version: 6.151.5
+
+[200, 500, '/health', '/ingest', '/query', '0.1.0', 'Modern RAG Pipeline', 'Number of chunks', 'Optional metadata', 'healthy', 'success']
