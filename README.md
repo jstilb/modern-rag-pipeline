@@ -182,3 +182,10 @@ pytest tests/integration/ -v
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+
+## Related Projects
+
+- [agent-orchestrator](https://github.com/jstilb/agent-orchestrator) — Multi-agent orchestration with LangGraph
+- [mcp-toolkit-server](https://github.com/jstilb/mcp-toolkit-server) — MCP server toolkit for Claude AI integration
+- [llm-eval-framework](https://github.com/jstilb/llm-eval-framework) — LLM evaluation and testing framework
