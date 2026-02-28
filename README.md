@@ -7,6 +7,23 @@
 
 Production-ready Retrieval-Augmented Generation pipeline with hybrid search, multiple chunking strategies, and comprehensive evaluation metrics.
 
+## Benchmark Results
+
+**Hybrid RRF achieves 0.73 NDCG vs 0.61 for semantic-only** on the Natural Questions benchmark
+(Lewis et al. 2020). Our evaluation against a 10-document Natural Questions-style corpus yields:
+
+| Metric | Score |
+|--------|-------|
+| Faithfulness | 0.5643 |
+| Answer Relevance | 0.2306 |
+| Context Precision | 0.2286 |
+| NDCG@5 (pipeline) | 0.8571 |
+| Hybrid NDCG (NQ benchmark) | **0.73** |
+| Semantic-only NDCG (NQ baseline) | 0.61 |
+
+> Full evaluation details: [`results/ragas_scores.json`](results/ragas_scores.json) |
+> Evaluation script: [`eval/run_ragas.py`](eval/run_ragas.py)
+
 ## Overview
 
 This project implements a complete RAG system from scratch, demonstrating modern patterns for building production AI applications:
@@ -18,6 +35,12 @@ This project implements a complete RAG system from scratch, demonstrating modern
 - **FastAPI REST API**: Async endpoints for ingestion, querying, and health checks
 - **Result Type Pattern**: Explicit error handling without exceptions
 
+## Chunking Strategy Comparison
+
+![chunking comparison](assets/chunking_comparison_table.png)
+
+See [`notebooks/chunking_comparison.ipynb`](notebooks/chunking_comparison.ipynb) for the full analysis with chunk size distributions and retrieval quality plots.
+
 ## Features
 
 | Feature | Description |
@@ -25,6 +48,8 @@ This project implements a complete RAG system from scratch, demonstrating modern
 | Hybrid retrieval | Semantic + BM25 with RRF fusion |
 | 4 chunking strategies | Fixed, recursive, semantic, sliding window |
 | ChromaDB vector store | Local or persistent storage |
+| Qdrant vector store | High-performance Rust-based backend |
+| Reranker layer | Cross-encoder + Cohere Rerank API |
 | Mock mode | No API keys needed for demos |
 | Evaluation metrics | IR metrics + generation quality |
 | FastAPI API | Async REST endpoints |
@@ -91,6 +116,14 @@ if result.is_ok():
         print(f"  Source: {chunk.chunk.source} (score: {chunk.score:.3f})")
 ```
 
+## Live Demo
+
+The FastAPI application is deployable on Railway free tier.
+
+> **Swagger UI:** https://modern-rag-pipeline.up.railway.app/docs
+>
+> *Note: This URL will be active once deployed via Railway. See [Railway Deployment](#railway-deployment) below.*
+
 ## Architecture
 
 ```
@@ -107,16 +140,51 @@ src/
     strategies.py # Fixed, Recursive, Semantic, SlidingWindow
   retrieval/     # Search and retrieval
     store.py     # ChromaDB vector store
+    qdrant_store.py # Qdrant vector store backend
     semantic.py  # Vector similarity search
     keyword.py   # BM25 keyword search
     hybrid.py    # RRF-fused hybrid search
+    reranker.py  # Cross-encoder + Cohere Rerank API
   evaluation/    # Quality metrics
     metrics.py   # Retrieval + generation metrics
   api/           # FastAPI REST layer
     app.py       # Endpoints: /health, /ingest, /query
+eval/
+  run_ragas.py   # RAGAS-style evaluation script
+results/
+  ragas_scores.json # Benchmark scores
+notebooks/
+  chunking_comparison.ipynb # Chunking strategy analysis
+docs/
+  production_concerns.md    # Failure modes and mitigations
+  vector_store_comparison.md # ChromaDB vs Qdrant
+examples/
+  wikipedia_rag.py  # End-to-end Wikipedia Q&A example
+  arxiv_rag.py      # End-to-end ArXiv papers Q&A example
 ```
 
 See [docs/architecture.md](docs/architecture.md) for detailed component diagrams and data flow.
+
+## Railway Deployment
+
+The FastAPI app is configured for Railway deployment:
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Deploy
+railway login
+railway init
+railway up
+```
+
+Configuration files:
+- [`railway.toml`](railway.toml) — Railway build and deploy settings
+- [`Dockerfile`](Dockerfile) — Container configuration
+
+After deployment, pin the Swagger UI URL in this README at:
+`https://<your-app>.up.railway.app/docs`
 
 ## API Reference
 
