@@ -48,6 +48,24 @@ dev = [
     "mypy>=1.13.0,<2.0.0",
     "httpx>=0.28.0,<0.29.0",
 ]
+eval = [
+    # Evaluation and benchmarking dependencies (pinned for reproducibility)
+    "numpy>=1.26.0,<2.0.0",
+    "datasets>=2.14.0,<4.0.0",
+    "scikit-learn>=1.3.0,<2.0.0",
+]
+reranker = [
+    # Reranking dependencies — cross-encoder and Cohere
+    "sentence-transformers>=2.7.0,<3.0.0",
+    "cohere>=5.0.0,<6.0.0",
+]
+qdrant = [
+    # Qdrant vector store backend
+    "qdrant-client>=1.7.0,<2.0.0",
+]
+all = [
+    "modern-rag-pipeline[eval,reranker,qdrant]",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
