@@ -1,0 +1,11 @@
+{
+  "faithfulness": 0.5643,
+  "answer_relevance": 0.2306,
+  "context_precision": 0.2286,
+  "ndcg": 0.8571,
+  "num_queries": 7,
+  "hybrid_ndcg": 0.73,
+  "semantic_only_ndcg": 0.61,
+  "timestamp": "2026-02-28T15:35:28.634722+00:00",
+  "pipeline_mode": "mock"
+}
