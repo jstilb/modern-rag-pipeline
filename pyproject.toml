@@ -50,6 +50,7 @@ dev = [
 ]
 eval = [
     # Evaluation and benchmarking dependencies (pinned for reproducibility)
+    "ragas>=0.1.0,<0.3.0",
     "numpy>=1.26.0,<2.0.0",
     "datasets>=2.14.0,<4.0.0",
     "scikit-learn>=1.3.0,<2.0.0",
