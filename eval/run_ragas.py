@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
-"""RAGAS-style evaluation script for the modern-rag-pipeline.
+"""RAGAS evaluation script for the modern-rag-pipeline.
 
-Evaluates the RAG pipeline against a Natural Questions-style benchmark dataset.
-Does NOT require the external RAGAS library — uses the pipeline's built-in
-evaluation metrics from ``src/evaluation/metrics.py``.
+Evaluates the RAG pipeline against a Natural Questions-style benchmark dataset
+using the ``ragas`` library (https://docs.ragas.io/) when available.
 
-Computes:
-- Faithfulness: How grounded the answer is in the retrieved context
-- Answer Relevance: How relevant the answer is to the query
-- Context Precision: What fraction of retrieved chunks are actually relevant
-- NDCG@5: Normalized Discounted Cumulative Gain for retrieval quality
+When ``ragas`` (the [eval] optional-dependency group) is installed, this script:
+
+- Uses ``ragas.SingleTurnSample`` / ``ragas.EvaluationDataset`` to structure
+  evaluation data in the canonical RAGAS schema.
+- Computes retrieval metrics via ``ragas.metrics.NonLLMContextPrecisionWithReference``
+  and ``ragas.metrics.NonLLMContextRecall`` — these run without an LLM/API key.
+- Attempts LLM-based metrics (``Faithfulness``, ``AnswerRelevancy``) when
+  ``OPENAI_API_KEY`` is present; falls back to internal heuristic metrics
+  otherwise (useful for CI/mock runs without API credentials).
+
+When ``ragas`` is NOT installed, the script falls back entirely to the built-in
+metrics in ``src/evaluation/metrics.py``.
 
 Results are persisted to ``results/ragas_scores.json``.
 
@@ -18,6 +24,7 @@ Usage::
     python eval/run_ragas.py
     python eval/run_ragas.py --output results/custom_scores.json
     python eval/run_ragas.py --verbose
+    python eval/run_ragas.py --no-ragas  # force internal-only metrics
 """
 
 from __future__ import annotations
@@ -28,6 +35,7 @@ import os
 import sys
 import time
 from dataclasses import asdict, dataclass
+from typing import TYPE_CHECKING
 
 # Ensure project root is on path
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -38,6 +46,34 @@ from src.evaluation.metrics import evaluate_generation, evaluate_retrieval
 from src.rag.config import RAGConfig, RetrievalMethod, RunMode
 from src.rag.document import Document
 from src.rag.pipeline import RAGPipeline
+
+# ---------------------------------------------------------------------------
+# Ragas integration — optional but preferred when [eval] extras are installed
+# ---------------------------------------------------------------------------
+
+_RAGAS_AVAILABLE = False
+_RAGAS_LLM_METRICS_AVAILABLE = False
+
+try:
+    import ragas  # noqa: F401  — confirm importable
+    from ragas import EvaluationDataset, SingleTurnSample, evaluate as ragas_evaluate
+    from ragas.metrics import (
+        AnswerRelevancy,
+        Faithfulness,
+        NonLLMContextPrecisionWithReference,
+        NonLLMContextRecall,
+    )
+
+    _RAGAS_AVAILABLE = True
+
+    # LLM-based metrics (faithfulness, answer relevancy) require an LLM.
+    # We detect availability by checking for OPENAI_API_KEY. Other LLM
+    # providers can be added here if needed.
+    if os.environ.get("OPENAI_API_KEY"):
+        _RAGAS_LLM_METRICS_AVAILABLE = True
+
+except ImportError:
+    pass  # ragas not installed — will use internal metrics throughout
 
 
 # ---------------------------------------------------------------------------
@@ -222,24 +258,101 @@ class AggregatedScores:
     semantic_only_ndcg: float
     timestamp: str
     pipeline_mode: str
+    eval_backend: str  # "ragas" or "internal"
+
+
+def _evaluate_with_ragas(
+    query: str,
+    answer: str,
+    retrieved_contexts: list[str],
+    reference_contexts: list[str],
+) -> tuple[float, float, float]:
+    """Compute context_precision, context_recall, and optionally LLM metrics via ragas.
+
+    Returns (context_precision, answer_relevance_override, faithfulness_override).
+    answer_relevance_override and faithfulness_override are -1.0 when ragas LLM
+    metrics are not available (caller should use internal heuristics instead).
+    """
+    sample = SingleTurnSample(
+        user_input=query,
+        retrieved_contexts=retrieved_contexts,
+        reference_contexts=reference_contexts,
+        response=answer,
+    )
+    dataset = EvaluationDataset(samples=[sample])
+
+    # Always compute the non-LLM retrieval metrics
+    non_llm_metrics: list[object] = [
+        NonLLMContextPrecisionWithReference(),
+        NonLLMContextRecall(),
+    ]
+    retrieval_result = ragas_evaluate(
+        dataset=dataset,
+        metrics=non_llm_metrics,  # type: ignore[arg-type]
+        show_progress=False,
+    )
+    retrieval_scores = retrieval_result.scores[0] if retrieval_result.scores else {}
+    context_precision = float(
+        retrieval_scores.get("non_llm_context_precision_with_reference", 0.0)
+    )
+
+    # Attempt LLM-based faithfulness and answer relevancy when API key present
+    faithfulness_override = -1.0
+    answer_relevance_override = -1.0
+    if _RAGAS_LLM_METRICS_AVAILABLE:
+        try:
+            llm_metrics: list[object] = [Faithfulness(), AnswerRelevancy()]
+            llm_result = ragas_evaluate(
+                dataset=dataset,
+                metrics=llm_metrics,  # type: ignore[arg-type]
+                show_progress=False,
+                raise_exceptions=False,
+            )
+            llm_scores = llm_result.scores[0] if llm_result.scores else {}
+            faithfulness_override = float(llm_scores.get("faithfulness", -1.0))
+            answer_relevance_override = float(llm_scores.get("answer_relevancy", -1.0))
+        except Exception:  # noqa: BLE001
+            pass  # LLM call failed — fall back to internal heuristics
+
+    return context_precision, answer_relevance_override, faithfulness_override
 
 
 def run_evaluation(
     output_path: str = "results/ragas_scores.json",
     verbose: bool = False,
+    force_internal: bool = False,
 ) -> AggregatedScores:
-    """Run the full RAGAS-style evaluation and return aggregated scores.
+    """Run the full RAGAS evaluation and return aggregated scores.
+
+    When the ``ragas`` library is installed (via ``pip install -e '.[eval]'``),
+    retrieval metrics are computed using ``ragas.metrics.NonLLMContextPrecisionWithReference``
+    and ``ragas.metrics.NonLLMContextRecall``.  LLM-based generation metrics
+    (faithfulness, answer relevancy) additionally use ``ragas.metrics.Faithfulness``
+    and ``ragas.metrics.AnswerRelevancy`` when an ``OPENAI_API_KEY`` is set.
+
+    When ragas is not installed or ``force_internal=True``, all metrics fall
+    back to the pure-Python heuristics in ``src/evaluation/metrics.py``.
 
     Args:
         output_path: Path to write the JSON results file.
         verbose: If True, print per-query results to stdout.
+        force_internal: If True, skip ragas even if it is installed.
 
     Returns:
         AggregatedScores with mean metrics across all benchmark queries.
     """
-    print("Running RAGAS-style evaluation on Natural Questions subset...")
-    print(f"  Corpus: {len(BENCHMARK_CORPUS)} documents")
-    print(f"  Queries: {len(BENCHMARK_QUESTIONS)} benchmark questions")
+    use_ragas = _RAGAS_AVAILABLE and not force_internal
+    eval_backend = "ragas" if use_ragas else "internal"
+
+    print("Running RAGAS evaluation on Natural Questions subset...")
+    print(f"  Corpus:      {len(BENCHMARK_CORPUS)} documents")
+    print(f"  Queries:     {len(BENCHMARK_QUESTIONS)} benchmark questions")
+    print(f"  Eval backend: {eval_backend}", end="")
+    if use_ragas:
+        llm_mode = "ragas + LLM metrics" if _RAGAS_LLM_METRICS_AVAILABLE else "ragas (non-LLM only)"
+        print(f" [{llm_mode}]")
+    else:
+        print()
     print()
 
     # Set up pipeline in mock mode (reproducible, no API keys)
@@ -278,42 +391,97 @@ def run_evaluation(
         answer = gen_result.answer
         retrieved_chunks = gen_result.retrieved_chunks
 
-        # Compute retrieval metrics
-        # Map chunk source IDs to doc IDs for NDCG calculation
-        retrieved_source_ids = [c.chunk.doc_id for c in retrieved_chunks]
-        # In mock mode, doc_ids are UUIDs — compute NDCG based on content overlap instead
-        # We check if any retrieved chunk content overlaps with a relevant document
+        # Identify which retrieved chunks are relevant (content-based matching for mock mode)
         relevant_chunk_ids: set[str] = set()
         for chunk in retrieved_chunks:
             for doc in BENCHMARK_CORPUS:
                 if doc["id"] in relevant_ids:
-                    # Check if this chunk contains relevant content (first 50 chars match)
-                    if doc["content"][:50] in chunk.chunk.content or chunk.chunk.content[:50] in doc["content"]:
+                    if (
+                        doc["content"][:50] in chunk.chunk.content
+                        or chunk.chunk.content[:50] in doc["content"]
+                    ):
                         relevant_chunk_ids.add(chunk.chunk.chunk_id)
 
-        retrieval_metrics = evaluate_retrieval(
-            retrieved_ids=[c.chunk.chunk_id for c in retrieved_chunks],
-            relevant_ids=relevant_chunk_ids if relevant_chunk_ids else {retrieved_chunks[0].chunk.chunk_id} if retrieved_chunks else set(),
-            k=config.top_k,
-        )
-
-        # Compute generation metrics
         context_texts = [c.chunk.content for c in retrieved_chunks]
-        gen_metrics = evaluate_generation(
-            answer=answer,
-            query=query,
-            context_chunks=context_texts,
-        )
 
-        # Context precision: fraction of retrieved chunks that are relevant
-        context_precision = retrieval_metrics.precision_at_k
+        if use_ragas:
+            # Use ragas for retrieval metrics (non-LLM, no API key needed).
+            # reference_contexts = the corpus passages known to be relevant.
+            reference_contexts = [
+                doc["content"]
+                for doc in BENCHMARK_CORPUS
+                if doc["id"] in relevant_ids
+            ]
+            ragas_precision, ragas_answer_relevance, ragas_faithfulness = _evaluate_with_ragas(
+                query=query,
+                answer=answer,
+                retrieved_contexts=context_texts,
+                reference_contexts=reference_contexts,
+            )
+            context_precision = ragas_precision
+
+            # Fall back to internal generation metrics when LLM is unavailable
+            if ragas_faithfulness < 0.0 or ragas_answer_relevance < 0.0:
+                gen_metrics = evaluate_generation(
+                    answer=answer,
+                    query=query,
+                    context_chunks=context_texts,
+                )
+                faithfulness = (
+                    ragas_faithfulness if ragas_faithfulness >= 0.0 else gen_metrics.faithfulness
+                )
+                answer_relevance = (
+                    ragas_answer_relevance
+                    if ragas_answer_relevance >= 0.0
+                    else gen_metrics.answer_relevance
+                )
+            else:
+                faithfulness = ragas_faithfulness
+                answer_relevance = ragas_answer_relevance
+
+            # NDCG still uses internal IR metric (ragas does not compute NDCG@k natively)
+            retrieval_metrics = evaluate_retrieval(
+                retrieved_ids=[c.chunk.chunk_id for c in retrieved_chunks],
+                relevant_ids=(
+                    relevant_chunk_ids
+                    if relevant_chunk_ids
+                    else {retrieved_chunks[0].chunk.chunk_id}
+                    if retrieved_chunks
+                    else set()
+                ),
+                k=config.top_k,
+            )
+            ndcg = retrieval_metrics.ndcg_at_k
+
+        else:
+            # Internal-only path (ragas not installed or force_internal=True)
+            retrieval_metrics = evaluate_retrieval(
+                retrieved_ids=[c.chunk.chunk_id for c in retrieved_chunks],
+                relevant_ids=(
+                    relevant_chunk_ids
+                    if relevant_chunk_ids
+                    else {retrieved_chunks[0].chunk.chunk_id}
+                    if retrieved_chunks
+                    else set()
+                ),
+                k=config.top_k,
+            )
+            gen_metrics = evaluate_generation(
+                answer=answer,
+                query=query,
+                context_chunks=context_texts,
+            )
+            context_precision = retrieval_metrics.precision_at_k
+            ndcg = retrieval_metrics.ndcg_at_k
+            faithfulness = gen_metrics.faithfulness
+            answer_relevance = gen_metrics.answer_relevance
 
         result = EvalResult(
             query=query,
-            faithfulness=gen_metrics.faithfulness,
-            answer_relevance=gen_metrics.answer_relevance,
+            faithfulness=faithfulness,
+            answer_relevance=answer_relevance,
             context_precision=context_precision,
-            ndcg=retrieval_metrics.ndcg_at_k,
+            ndcg=ndcg,
             num_retrieved=len(retrieved_chunks),
             latency_ms=elapsed_ms,
         )
@@ -357,6 +525,7 @@ def run_evaluation(
         semantic_only_ndcg=semantic_only_ndcg,
         timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         pipeline_mode="mock",
+        eval_backend=eval_backend,
     )
 
     # Persist results
@@ -370,7 +539,7 @@ def run_evaluation(
 def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="Run RAGAS-style evaluation on the modern-rag-pipeline."
+        description="Run RAGAS evaluation on the modern-rag-pipeline."
     )
     parser.add_argument(
         "--output",
@@ -382,13 +551,24 @@ def main() -> None:
         action="store_true",
         help="Print per-query results to stdout",
     )
+    parser.add_argument(
+        "--no-ragas",
+        dest="no_ragas",
+        action="store_true",
+        help="Force internal metrics only, even if ragas is installed",
+    )
     args = parser.parse_args()
 
-    scores = run_evaluation(output_path=args.output, verbose=args.verbose)
+    scores = run_evaluation(
+        output_path=args.output,
+        verbose=args.verbose,
+        force_internal=args.no_ragas,
+    )
 
     print("=" * 50)
     print("Evaluation Complete")
     print("=" * 50)
+    print(f"Eval backend:        {scores.eval_backend}")
     print(f"Queries evaluated:   {scores.num_queries}")
     print(f"Faithfulness:        {scores.faithfulness:.4f}")
     print(f"Answer Relevance:    {scores.answer_relevance:.4f}")

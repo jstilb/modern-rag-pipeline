@@ -6,6 +6,7 @@
   "num_queries": 7,
   "hybrid_ndcg": 0.73,
   "semantic_only_ndcg": 0.61,
-  "timestamp": "2026-02-28T15:35:28.634722+00:00",
-  "pipeline_mode": "mock"
+  "timestamp": "2026-03-01T20:17:46.758444+00:00",
+  "pipeline_mode": "mock",
+  "eval_backend": "internal"
 }
