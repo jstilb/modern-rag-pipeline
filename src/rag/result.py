@@ -7,7 +7,10 @@ Forces callers to handle both success and error cases explicitly.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Generic, TypeVar, Union
+from typing import TYPE_CHECKING, Generic, TypeVar
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 T = TypeVar("T")
 E = TypeVar("E")
@@ -64,4 +67,4 @@ class Err(Generic[E]):
         return Err(fn(self.error))  # type: ignore[return-value]
 
 
-Result = Union[Ok[T], Err[E]]
+Result = Ok[T] | Err[E]

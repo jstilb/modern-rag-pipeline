@@ -1,7 +1,8 @@
 """Tests for chunking strategies."""
 
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from src.chunking.strategies import (
     FixedSizeChunker,

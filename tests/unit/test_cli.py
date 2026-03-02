@@ -1,12 +1,11 @@
 """Tests for CLI interface."""
 
 import json
-from io import StringIO
 from unittest.mock import patch
 
 import pytest
 
-from src.rag.cli import main, run_demo, run_query, SAMPLE_DOCUMENTS
+from src.rag.cli import SAMPLE_DOCUMENTS, main, run_demo, run_query
 
 
 class TestCLI:
@@ -38,9 +37,8 @@ class TestCLI:
             assert len(doc.source) > 0
 
     def test_main_no_args(self) -> None:
-        with pytest.raises(SystemExit):
-            with patch("sys.argv", ["rag-pipeline"]):
-                main()
+        with pytest.raises(SystemExit), patch("sys.argv", ["rag-pipeline"]):
+            main()
 
     def test_main_demo(self, capsys: pytest.CaptureFixture[str]) -> None:
         with patch("sys.argv", ["rag-pipeline", "demo"]):

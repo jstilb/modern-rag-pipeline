@@ -9,19 +9,20 @@ from __future__ import annotations
 
 import hashlib
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from src.rag.config import RAGConfig, RunMode
-from src.rag.document import RetrievedChunk
 from src.rag.result import Err, Ok, Result
+
+if TYPE_CHECKING:
+    from src.rag.document import RetrievedChunk
 
 
 class LLMProvider(ABC):
     """Abstract LLM provider interface."""
 
     @abstractmethod
-    def generate(
-        self, query: str, context_chunks: list[RetrievedChunk]
-    ) -> Result[str, str]:
+    def generate(self, query: str, context_chunks: list[RetrievedChunk]) -> Result[str, str]:
         """Generate an answer given a query and retrieved context."""
         ...
 
@@ -42,9 +43,7 @@ class MockLLMProvider(LLMProvider):
         "regarding {topics}.",
     ]
 
-    def generate(
-        self, query: str, context_chunks: list[RetrievedChunk]
-    ) -> Result[str, str]:
+    def generate(self, query: str, context_chunks: list[RetrievedChunk]) -> Result[str, str]:
         if not context_chunks:
             return Ok(
                 "I don't have enough context to answer this question. "
@@ -64,9 +63,8 @@ class MockLLMProvider(LLMProvider):
             topics = ", ".join(query.split()[:5])
 
             # Select template deterministically
-            template_index = (
-                int(hashlib.md5(query.encode()).hexdigest()[:4], 16)
-                % len(self.TEMPLATES)
+            template_index = int(hashlib.md5(query.encode()).hexdigest()[:4], 16) % len(
+                self.TEMPLATES
             )
             template = self.TEMPLATES[template_index]
 
@@ -87,9 +85,7 @@ class OpenAILLMProvider(LLMProvider):
     def __init__(self, config: RAGConfig) -> None:
         self._config = config
 
-    def generate(
-        self, query: str, context_chunks: list[RetrievedChunk]
-    ) -> Result[str, str]:
+    def generate(self, query: str, context_chunks: list[RetrievedChunk]) -> Result[str, str]:
         try:
             from langchain_openai import ChatOpenAI
 

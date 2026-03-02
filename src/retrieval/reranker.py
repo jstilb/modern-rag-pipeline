@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
-from typing import Literal, Optional, Union
+from typing import Literal
 
 from src.rag.document import RetrievedChunk
 
@@ -35,7 +35,7 @@ class BaseReranker(ABC):
         self,
         query: str,
         chunks: list[RetrievedChunk],
-        top_n: Optional[int] = None,
+        top_n: int | None = None,
     ) -> list[RetrievedChunk]:
         """Rerank retrieved chunks by relevance to the query.
 
@@ -91,7 +91,7 @@ class CrossEncoderReranker(BaseReranker):
         self,
         query: str,
         chunks: list[RetrievedChunk],
-        top_n: Optional[int] = None,
+        top_n: int | None = None,
     ) -> list[RetrievedChunk]:
         """Rerank chunks using cross-encoder scoring.
 
@@ -118,7 +118,6 @@ class CrossEncoderReranker(BaseReranker):
             scored = []
             for i, chunk in enumerate(chunks):
                 mock_score = max(0.0, min(1.0, 0.95 - i * 0.07 + (len(chunks) - i) * 0.01))
-                from dataclasses import replace as dc_replace
 
                 # Reconstruct with updated score to show reranker effect
                 scored.append((mock_score, chunk))
@@ -175,7 +174,7 @@ class CohereReranker(BaseReranker):
     def __init__(
         self,
         model: str = "rerank-english-v3.0",
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         mock_mode: bool = False,
     ) -> None:
         self._model = model
@@ -202,7 +201,7 @@ class CohereReranker(BaseReranker):
         self,
         query: str,
         chunks: list[RetrievedChunk],
-        top_n: Optional[int] = None,
+        top_n: int | None = None,
     ) -> list[RetrievedChunk]:
         """Rerank chunks using the Cohere Rerank API.
 
@@ -258,14 +257,14 @@ class CohereReranker(BaseReranker):
         return reranked
 
 
-RerankerType = Union[CrossEncoderReranker, CohereReranker]
+RerankerType = CrossEncoderReranker | CohereReranker
 
 
 def create_reranker(
     reranker_type: Literal["cross_encoder", "cohere"] = "cross_encoder",
     *,
-    model_name: Optional[str] = None,
-    api_key: Optional[str] = None,
+    model_name: str | None = None,
+    api_key: str | None = None,
     mock_mode: bool = False,
 ) -> RerankerType:
     """Factory function to create a configured reranker.
@@ -296,6 +295,5 @@ def create_reranker(
         return CohereReranker(**kwargs)  # type: ignore[arg-type]
     else:
         raise ValueError(
-            f"Unknown reranker type: {reranker_type!r}. "
-            "Expected 'cross_encoder' or 'cohere'."
+            f"Unknown reranker type: {reranker_type!r}. " "Expected 'cross_encoder' or 'cohere'."
         )

@@ -18,7 +18,6 @@ from src.rag.config import RAGConfig, RunMode
 from src.rag.document import Document
 from src.rag.pipeline import RAGPipeline
 
-
 SAMPLE_DOCUMENTS = [
     Document(
         content=(
@@ -211,13 +210,18 @@ def run_query(question: str, top_k: int) -> None:
         sys.exit(1)
 
     output = result.unwrap()
-    print(json.dumps({
-        "answer": output.answer,
-        "query": output.query,
-        "model": output.model,
-        "latency_ms": output.latency_ms,
-        "source_count": len(output.retrieved_chunks),
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "answer": output.answer,
+                "query": output.query,
+                "model": output.model,
+                "latency_ms": output.latency_ms,
+                "source_count": len(output.retrieved_chunks),
+            },
+            indent=2,
+        )
+    )
 
 
 def run_ingest(files: list[str]) -> None:
@@ -248,6 +252,7 @@ def run_ingest(files: list[str]) -> None:
 def run_serve(host: str, port: int) -> None:
     """Start the FastAPI server."""
     import uvicorn
+
     uvicorn.run("src.api.app:app", host=host, port=port, reload=True)
 
 

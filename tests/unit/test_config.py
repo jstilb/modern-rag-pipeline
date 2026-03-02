@@ -1,5 +1,7 @@
 """Tests for RAG configuration."""
 
+import pytest
+
 from src.rag.config import (
     ChunkingMethod,
     MockConfig,
@@ -46,6 +48,3 @@ class TestMockConfig:
         config = MockConfig.with_overrides(chunk_size=128)
         assert config.mode == RunMode.MOCK
         assert config.chunk_size == 128
-
-
-import pytest

@@ -6,8 +6,6 @@ that embedding models might miss (e.g., acronyms, proper nouns).
 
 from __future__ import annotations
 
-from typing import Optional
-
 from rank_bm25 import BM25Okapi
 
 from src.rag.document import Chunk, RetrievedChunk
@@ -19,7 +17,7 @@ class KeywordRetriever:
 
     def __init__(self) -> None:
         self._chunks: list[Chunk] = []
-        self._bm25: Optional[BM25Okapi] = None
+        self._bm25: BM25Okapi | None = None
         self._tokenized_corpus: list[list[str]] = []
 
     def index(self, chunks: list[Chunk]) -> Result[int, str]:
@@ -29,17 +27,13 @@ class KeywordRetriever:
 
         try:
             self._chunks = chunks
-            self._tokenized_corpus = [
-                chunk.content.lower().split() for chunk in chunks
-            ]
+            self._tokenized_corpus = [chunk.content.lower().split() for chunk in chunks]
             self._bm25 = BM25Okapi(self._tokenized_corpus)
             return Ok(len(chunks))
         except Exception as e:
             return Err(f"BM25 indexing failed: {e}")
 
-    def retrieve(
-        self, query: str, top_k: Optional[int] = None
-    ) -> Result[list[RetrievedChunk], str]:
+    def retrieve(self, query: str, top_k: int | None = None) -> Result[list[RetrievedChunk], str]:
         """Retrieve the top-k chunks using BM25 scoring."""
         if self._bm25 is None or not self._chunks:
             return Ok([])
@@ -55,9 +49,7 @@ class KeywordRetriever:
             normalized = scores / max_score
 
             # Get top-k indices
-            top_indices = sorted(
-                range(len(scores)), key=lambda i: scores[i], reverse=True
-            )[:k]
+            top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]
 
             retrieved: list[RetrievedChunk] = []
             for idx in top_indices:

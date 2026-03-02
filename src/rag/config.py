@@ -9,7 +9,6 @@ Supports three modes:
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -53,7 +52,7 @@ class RAGConfig(BaseSettings):
     mode: RunMode = Field(default=RunMode.MOCK, description="Pipeline execution mode")
 
     # LLM settings
-    openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key")
+    openai_api_key: str | None = Field(default=None, description="OpenAI API key")
     llm_model: str = Field(default="gpt-4o-mini", description="LLM model name")
     llm_temperature: float = Field(default=0.1, description="LLM temperature")
     llm_max_tokens: int = Field(default=1024, description="Max tokens for LLM response")

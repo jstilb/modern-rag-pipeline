@@ -49,9 +49,9 @@ class TestCrossEncoderReranker:
         """Reranker returns as many chunks as were passed in."""
         reranker = CrossEncoderReranker(mock_mode=True)
         result = reranker.rerank(QUERY, SAMPLE_CHUNKS)
-        assert len(result) == len(SAMPLE_CHUNKS), (
-            f"Expected {len(SAMPLE_CHUNKS)} results, got {len(result)}"
-        )
+        assert len(result) == len(
+            SAMPLE_CHUNKS
+        ), f"Expected {len(SAMPLE_CHUNKS)} results, got {len(result)}"
 
     def test_rerank_respects_top_n(self) -> None:
         """Reranker respects the top_n parameter."""
@@ -64,18 +64,16 @@ class TestCrossEncoderReranker:
         reranker = CrossEncoderReranker(mock_mode=True)
         result = reranker.rerank(QUERY, SAMPLE_CHUNKS)
         for chunk in result:
-            assert 0.0 <= chunk.score <= 1.0, (
-                f"Score {chunk.score} is outside [0, 1]"
-            )
+            assert 0.0 <= chunk.score <= 1.0, f"Score {chunk.score} is outside [0, 1]"
 
     def test_rerank_sets_retrieval_method_to_cross_encoder(self) -> None:
         """Reranked chunks have retrieval_method='cross_encoder'."""
         reranker = CrossEncoderReranker(mock_mode=True)
         result = reranker.rerank(QUERY, SAMPLE_CHUNKS)
         for chunk in result:
-            assert chunk.retrieval_method == "cross_encoder", (
-                f"Expected retrieval_method='cross_encoder', got {chunk.retrieval_method!r}"
-            )
+            assert (
+                chunk.retrieval_method == "cross_encoder"
+            ), f"Expected retrieval_method='cross_encoder', got {chunk.retrieval_method!r}"
 
     def test_rerank_preserves_chunk_content(self) -> None:
         """Reranking does not alter chunk content."""
@@ -83,9 +81,9 @@ class TestCrossEncoderReranker:
         result = reranker.rerank(QUERY, SAMPLE_CHUNKS)
         input_contents = {c.chunk.content for c in SAMPLE_CHUNKS}
         output_contents = {c.chunk.content for c in result}
-        assert input_contents == output_contents, (
-            "Reranker changed chunk content (should only change order/scores)"
-        )
+        assert (
+            input_contents == output_contents
+        ), "Reranker changed chunk content (should only change order/scores)"
 
     def test_rerank_empty_input_returns_empty(self) -> None:
         """Reranker returns empty list when given empty input."""
@@ -98,9 +96,7 @@ class TestCrossEncoderReranker:
         reranker = CrossEncoderReranker(mock_mode=True)
         result = reranker.rerank(QUERY, SAMPLE_CHUNKS)
         scores = [c.score for c in result]
-        assert scores == sorted(scores, reverse=True), (
-            f"Scores are not sorted descending: {scores}"
-        )
+        assert scores == sorted(scores, reverse=True), f"Scores are not sorted descending: {scores}"
 
     def test_rerank_single_chunk(self) -> None:
         """Reranker handles a single chunk without errors."""
@@ -119,9 +115,9 @@ class TestCohereReranker:
         """CohereReranker returns same number of chunks as input."""
         reranker = CohereReranker(mock_mode=True)
         result = reranker.rerank(QUERY, SAMPLE_CHUNKS)
-        assert len(result) == len(SAMPLE_CHUNKS), (
-            f"Expected {len(SAMPLE_CHUNKS)} results, got {len(result)}"
-        )
+        assert len(result) == len(
+            SAMPLE_CHUNKS
+        ), f"Expected {len(SAMPLE_CHUNKS)} results, got {len(result)}"
 
     def test_rerank_top_n_limits_results(self) -> None:
         """CohereReranker respects top_n parameter."""
@@ -134,18 +130,16 @@ class TestCohereReranker:
         reranker = CohereReranker(mock_mode=True)
         result = reranker.rerank(QUERY, SAMPLE_CHUNKS)
         for chunk in result:
-            assert 0.0 <= chunk.score <= 1.0, (
-                f"Score {chunk.score} is outside [0, 1]"
-            )
+            assert 0.0 <= chunk.score <= 1.0, f"Score {chunk.score} is outside [0, 1]"
 
     def test_rerank_sets_retrieval_method_to_cohere(self) -> None:
         """Reranked chunks have retrieval_method='cohere_rerank'."""
         reranker = CohereReranker(mock_mode=True)
         result = reranker.rerank(QUERY, SAMPLE_CHUNKS)
         for chunk in result:
-            assert chunk.retrieval_method == "cohere_rerank", (
-                f"Expected retrieval_method='cohere_rerank', got {chunk.retrieval_method!r}"
-            )
+            assert (
+                chunk.retrieval_method == "cohere_rerank"
+            ), f"Expected retrieval_method='cohere_rerank', got {chunk.retrieval_method!r}"
 
     def test_rerank_empty_input_returns_empty(self) -> None:
         """CohereReranker returns empty list for empty input."""
@@ -158,9 +152,7 @@ class TestCohereReranker:
         reranker = CohereReranker(mock_mode=True)
         result = reranker.rerank(QUERY, SAMPLE_CHUNKS)
         scores = [c.score for c in result]
-        assert scores == sorted(scores, reverse=True), (
-            f"Scores not sorted descending: {scores}"
-        )
+        assert scores == sorted(scores, reverse=True), f"Scores not sorted descending: {scores}"
 
     def test_rerank_changes_scores_from_input(self) -> None:
         """CohereReranker assigns new scores (not the original retrieval scores)."""
@@ -170,9 +162,7 @@ class TestCohereReranker:
         output_scores = {c.score for c in result}
         # In mock mode the scores are deterministic (0.9, 0.85, ...) which differ
         # from the input scores (0.8, 0.7, 0.6, 0.5)
-        assert output_scores != input_scores, (
-            "Reranker scores should differ from retrieval scores"
-        )
+        assert output_scores != input_scores, "Reranker scores should differ from retrieval scores"
 
 
 class TestCreateReranker:
@@ -181,16 +171,16 @@ class TestCreateReranker:
     def test_factory_creates_cross_encoder(self) -> None:
         """create_reranker('cross_encoder') returns CrossEncoderReranker."""
         reranker = create_reranker("cross_encoder", mock_mode=True)
-        assert isinstance(reranker, CrossEncoderReranker), (
-            f"Expected CrossEncoderReranker, got {type(reranker)}"
-        )
+        assert isinstance(
+            reranker, CrossEncoderReranker
+        ), f"Expected CrossEncoderReranker, got {type(reranker)}"
 
     def test_factory_creates_cohere(self) -> None:
         """create_reranker('cohere') returns CohereReranker."""
         reranker = create_reranker("cohere", mock_mode=True)
-        assert isinstance(reranker, CohereReranker), (
-            f"Expected CohereReranker, got {type(reranker)}"
-        )
+        assert isinstance(
+            reranker, CohereReranker
+        ), f"Expected CohereReranker, got {type(reranker)}"
 
     def test_factory_raises_on_unknown_type(self) -> None:
         """create_reranker raises ValueError for unknown reranker_type."""

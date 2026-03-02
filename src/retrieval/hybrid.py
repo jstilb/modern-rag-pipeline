@@ -8,14 +8,15 @@ retrieval strategies, getting the best of both approaches:
 
 from __future__ import annotations
 
-from dataclasses import replace
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from src.rag.config import RAGConfig
-from src.rag.document import Chunk, RetrievedChunk
+from src.rag.document import RetrievedChunk
 from src.rag.result import Err, Ok, Result
-from src.retrieval.keyword import KeywordRetriever
-from src.retrieval.semantic import SemanticRetriever
+
+if TYPE_CHECKING:
+    from src.rag.config import RAGConfig
+    from src.retrieval.keyword import KeywordRetriever
+    from src.retrieval.semantic import SemanticRetriever
 
 
 class HybridRetriever:
@@ -31,9 +32,7 @@ class HybridRetriever:
         self._keyword = keyword
         self._config = config
 
-    def retrieve(
-        self, query: str, top_k: Optional[int] = None
-    ) -> Result[list[RetrievedChunk], str]:
+    def retrieve(self, query: str, top_k: int | None = None) -> Result[list[RetrievedChunk], str]:
         """Retrieve documents using hybrid search with RRF fusion."""
         k = top_k or self._config.top_k
 

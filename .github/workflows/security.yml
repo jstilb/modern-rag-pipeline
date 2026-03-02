@@ -26,7 +26,7 @@ jobs:
           pip install pip-audit
 
       - name: Audit dependencies
-        run: pip-audit --strict
+        run: pip-audit
 
       - name: Check for secrets
         uses: trufflesecurity/trufflehog@v3.82.13

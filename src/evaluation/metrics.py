@@ -8,7 +8,7 @@ No external eval framework dependencies - pure Python implementation.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,9 +60,7 @@ def evaluate_retrieval(
     precision = relevant_in_top_k / k if k > 0 else 0.0
 
     # Recall@k
-    recall = (
-        relevant_in_top_k / len(relevant_ids) if relevant_ids else 0.0
-    )
+    recall = relevant_in_top_k / len(relevant_ids) if relevant_ids else 0.0
 
     # MRR (Mean Reciprocal Rank)
     mrr = 0.0
@@ -87,9 +85,7 @@ def evaluate_retrieval(
     )
 
 
-def _compute_ndcg(
-    retrieved_ids: list[str], relevant_ids: set[str], k: int
-) -> float:
+def _compute_ndcg(retrieved_ids: list[str], relevant_ids: set[str], k: int) -> float:
     """Compute Normalized Discounted Cumulative Gain at k."""
     # DCG
     dcg = 0.0
@@ -136,31 +132,107 @@ def evaluate_generation(
         common_words = answer_words & context_words
         # Remove stop words from calculation
         stop_words = {
-            "the", "a", "an", "is", "are", "was", "were", "be", "been",
-            "being", "have", "has", "had", "do", "does", "did", "will",
-            "would", "could", "should", "may", "might", "shall", "can",
-            "to", "of", "in", "for", "on", "with", "at", "by", "from",
-            "as", "into", "through", "during", "before", "after", "and",
-            "but", "or", "nor", "not", "so", "yet", "both", "either",
-            "neither", "each", "every", "all", "any", "few", "more",
-            "most", "other", "some", "such", "no", "only", "own", "same",
-            "than", "too", "very", "just", "because", "this", "that",
-            "these", "those", "it", "its",
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "shall",
+            "can",
+            "to",
+            "of",
+            "in",
+            "for",
+            "on",
+            "with",
+            "at",
+            "by",
+            "from",
+            "as",
+            "into",
+            "through",
+            "during",
+            "before",
+            "after",
+            "and",
+            "but",
+            "or",
+            "nor",
+            "not",
+            "so",
+            "yet",
+            "both",
+            "either",
+            "neither",
+            "each",
+            "every",
+            "all",
+            "any",
+            "few",
+            "more",
+            "most",
+            "other",
+            "some",
+            "such",
+            "no",
+            "only",
+            "own",
+            "same",
+            "than",
+            "too",
+            "very",
+            "just",
+            "because",
+            "this",
+            "that",
+            "these",
+            "those",
+            "it",
+            "its",
         }
         meaningful_answer = answer_words - stop_words
         meaningful_common = common_words - stop_words
-        faithfulness = (
-            len(meaningful_common) / len(meaningful_answer)
-            if meaningful_answer
-            else 0.0
-        )
+        faithfulness = len(meaningful_common) / len(meaningful_answer) if meaningful_answer else 0.0
     else:
         faithfulness = 0.0
 
     # Answer relevance: word overlap between answer and query
     query_words = set(query.lower().split()) - {
-        "what", "how", "why", "when", "where", "who", "which", "is", "are",
-        "the", "a", "an", "do", "does", "can", "could", "would", "should",
+        "what",
+        "how",
+        "why",
+        "when",
+        "where",
+        "who",
+        "which",
+        "is",
+        "are",
+        "the",
+        "a",
+        "an",
+        "do",
+        "does",
+        "can",
+        "could",
+        "would",
+        "should",
     }
     if query_words:
         query_overlap = len(answer_words & query_words) / len(query_words)
@@ -171,9 +243,7 @@ def evaluate_generation(
     # Context utilization: how many chunks contributed words to the answer
     if context_chunks:
         chunks_used = sum(
-            1
-            for chunk in context_chunks
-            if len(set(chunk.lower().split()) & answer_words) > 3
+            1 for chunk in context_chunks if len(set(chunk.lower().split()) & answer_words) > 3
         )
         context_utilization = chunks_used / len(context_chunks)
     else:

@@ -3,7 +3,7 @@
 import uuid
 
 from src.rag.config import RAGConfig, RunMode
-from src.rag.document import Chunk, Document
+from src.rag.document import Chunk
 from src.rag.embeddings import MockEmbeddingProvider
 from src.retrieval.keyword import KeywordRetriever
 from src.retrieval.store import VectorStore

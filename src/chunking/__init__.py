@@ -3,8 +3,8 @@
 from src.chunking.strategies import (
     ChunkingStrategy,
     FixedSizeChunker,
-    SemanticChunker,
     RecursiveChunker,
+    SemanticChunker,
     SlidingWindowChunker,
 )
 

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-from dataclasses import replace
 
 from src.rag.document import Chunk, Document
 
@@ -24,9 +23,7 @@ class ChunkingStrategy(ABC):
         """Split a document into chunks."""
         ...
 
-    def _make_chunk(
-        self, content: str, document: Document, index: int
-    ) -> Chunk:
+    def _make_chunk(self, content: str, document: Document, index: int) -> Chunk:
         """Create a Chunk from content and source document."""
         words = content.split()
         return Chunk(
@@ -217,9 +214,7 @@ class SlidingWindowChunker(ChunkingStrategy):
         if step_size <= 0:
             raise ValueError(f"step_size must be positive, got {step_size}")
         if step_size > window_size:
-            raise ValueError(
-                f"step_size ({step_size}) must be <= window_size ({window_size})"
-            )
+            raise ValueError(f"step_size ({step_size}) must be <= window_size ({window_size})")
         self.window_size = window_size
         self.step_size = step_size
 

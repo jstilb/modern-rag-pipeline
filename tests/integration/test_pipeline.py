@@ -2,9 +2,7 @@
 
 import uuid
 
-import pytest
-
-from src.rag.config import RAGConfig, RunMode, ChunkingMethod, RetrievalMethod
+from src.rag.config import ChunkingMethod, RAGConfig, RetrievalMethod, RunMode
 from src.rag.document import Document
 from src.rag.pipeline import RAGPipeline
 

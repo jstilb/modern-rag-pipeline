@@ -10,12 +10,14 @@ remote Qdrant Cloud / self-hosted instances.
 from __future__ import annotations
 
 import uuid
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
-from src.rag.config import RAGConfig
 from src.rag.document import Chunk, RetrievedChunk
-from src.rag.embeddings import EmbeddingProvider
 from src.rag.result import Err, Ok, Result
+
+if TYPE_CHECKING:
+    from src.rag.config import RAGConfig
+    from src.rag.embeddings import EmbeddingProvider
 
 
 class QdrantVectorStore:
@@ -38,7 +40,7 @@ class QdrantVectorStore:
         embedding_provider: EmbeddingProvider,
         config: RAGConfig,
         location: str = ":memory:",
-        collection_name: Optional[str] = None,
+        collection_name: str | None = None,
         timeout: float = 30.0,
     ) -> None:
         try:
@@ -133,7 +135,7 @@ class QdrantVectorStore:
     def search(
         self,
         query: str,
-        top_k: Optional[int] = None,
+        top_k: int | None = None,
     ) -> Result[list[RetrievedChunk], str]:
         """Search for similar chunks using Qdrant vector similarity.
 

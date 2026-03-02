@@ -7,15 +7,17 @@ and health checks. Supports both production and mock modes.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from src.rag.config import RAGConfig, RunMode
+from src.rag.config import RAGConfig
 from src.rag.document import Document
 from src.rag.pipeline import RAGPipeline
-
 
 # --- Request/Response Models ---
 
@@ -48,7 +50,7 @@ class QueryRequest(BaseModel):
     """Request body for querying the pipeline."""
 
     query: str = Field(..., min_length=1, description="The question to answer")
-    top_k: Optional[int] = Field(default=None, ge=1, le=20, description="Number of chunks")
+    top_k: int | None = Field(default=None, ge=1, le=20, description="Number of chunks")
 
 
 class QueryResponse(BaseModel):
@@ -81,7 +83,7 @@ class HealthResponse(BaseModel):
 
 # --- Application ---
 
-_pipeline: Optional[RAGPipeline] = None
+_pipeline: RAGPipeline | None = None
 
 
 def get_pipeline() -> RAGPipeline:
@@ -102,7 +104,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Shutdown: cleanup
 
 
-def create_app(config: Optional[RAGConfig] = None) -> FastAPI:
+def create_app(config: RAGConfig | None = None) -> FastAPI:
     """Create and configure the FastAPI application.
 
     Args:

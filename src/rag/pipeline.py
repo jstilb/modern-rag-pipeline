@@ -12,7 +12,6 @@ for demos and testing without API keys.
 from __future__ import annotations
 
 import time
-from typing import Optional
 
 from src.chunking.strategies import (
     ChunkingStrategy,
@@ -48,9 +47,9 @@ class RAGPipeline:
 
     def __init__(
         self,
-        config: Optional[RAGConfig] = None,
-        embedding_provider: Optional[EmbeddingProvider] = None,
-        llm_provider: Optional[LLMProvider] = None,
+        config: RAGConfig | None = None,
+        embedding_provider: EmbeddingProvider | None = None,
+        llm_provider: LLMProvider | None = None,
     ) -> None:
         self._config = config or RAGConfig()
 
@@ -78,12 +77,8 @@ class RAGPipeline:
         overlap = min(self._config.chunk_overlap, chunk_size - 1)
 
         strategy_map: dict[ChunkingMethod, ChunkingStrategy] = {
-            ChunkingMethod.FIXED: FixedSizeChunker(
-                chunk_size=chunk_size, overlap=overlap
-            ),
-            ChunkingMethod.RECURSIVE: RecursiveChunker(
-                chunk_size=chunk_size, overlap=overlap
-            ),
+            ChunkingMethod.FIXED: FixedSizeChunker(chunk_size=chunk_size, overlap=overlap),
+            ChunkingMethod.RECURSIVE: RecursiveChunker(chunk_size=chunk_size, overlap=overlap),
             ChunkingMethod.SEMANTIC: SemanticChunker(chunk_size=chunk_size),
             ChunkingMethod.SLIDING_WINDOW: SlidingWindowChunker(
                 window_size=chunk_size, step_size=max(1, chunk_size - overlap)
@@ -125,7 +120,7 @@ class RAGPipeline:
 
         return Ok(total_chunks)
 
-    def query(self, query: str, top_k: Optional[int] = None) -> Result[GenerationResult, str]:
+    def query(self, query: str, top_k: int | None = None) -> Result[GenerationResult, str]:
         """Query the pipeline and generate an answer.
 
         Args:
@@ -163,9 +158,7 @@ class RAGPipeline:
             )
         )
 
-    def _retrieve(
-        self, query: str, top_k: int
-    ) -> Result[list[RetrievedChunk], str]:
+    def _retrieve(self, query: str, top_k: int) -> Result[list[RetrievedChunk], str]:
         """Retrieve chunks using the configured retrieval strategy."""
         method = self._config.retrieval_method
 

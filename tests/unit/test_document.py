@@ -1,7 +1,8 @@
 """Tests for document models."""
 
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from src.rag.document import Chunk, Document, GenerationResult, RetrievedChunk
 
@@ -31,9 +32,7 @@ class TestDocument:
         assert doc.metadata == {}
 
     def test_metadata_custom(self) -> None:
-        doc = Document(
-            content="Hello", source="test.txt", metadata={"key": "value"}
-        )
+        doc = Document(content="Hello", source="test.txt", metadata={"key": "value"})
         assert doc.metadata == {"key": "value"}
 
     @given(st.text(min_size=1, max_size=100).filter(lambda x: x.strip()))
@@ -60,31 +59,23 @@ class TestChunk:
 
 class TestRetrievedChunk:
     def test_valid_score(self) -> None:
-        chunk = Chunk(
-            content="text", doc_id="doc-1", chunk_index=0, source="test.txt"
-        )
+        chunk = Chunk(content="text", doc_id="doc-1", chunk_index=0, source="test.txt")
         rc = RetrievedChunk(chunk=chunk, score=0.85, retrieval_method="semantic")
         assert rc.score == 0.85
 
     def test_score_out_of_range(self) -> None:
-        chunk = Chunk(
-            content="text", doc_id="doc-1", chunk_index=0, source="test.txt"
-        )
+        chunk = Chunk(content="text", doc_id="doc-1", chunk_index=0, source="test.txt")
         with pytest.raises(ValueError, match="Score must be between"):
             RetrievedChunk(chunk=chunk, score=1.5, retrieval_method="semantic")
 
     def test_negative_score(self) -> None:
-        chunk = Chunk(
-            content="text", doc_id="doc-1", chunk_index=0, source="test.txt"
-        )
+        chunk = Chunk(content="text", doc_id="doc-1", chunk_index=0, source="test.txt")
         with pytest.raises(ValueError, match="Score must be between"):
             RetrievedChunk(chunk=chunk, score=-0.1, retrieval_method="semantic")
 
     @given(st.floats(min_value=0.0, max_value=1.0))
     def test_valid_scores_accepted(self, score: float) -> None:
-        chunk = Chunk(
-            content="text", doc_id="doc-1", chunk_index=0, source="test.txt"
-        )
+        chunk = Chunk(content="text", doc_id="doc-1", chunk_index=0, source="test.txt")
         rc = RetrievedChunk(chunk=chunk, score=score, retrieval_method="test")
         assert rc.score == score
 

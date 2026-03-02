@@ -6,15 +6,17 @@ dependency injection for the embedding provider.
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import chromadb
 from chromadb.config import Settings
 
-from src.rag.config import RAGConfig
 from src.rag.document import Chunk, RetrievedChunk
-from src.rag.embeddings import EmbeddingProvider
 from src.rag.result import Err, Ok, Result
+
+if TYPE_CHECKING:
+    from src.rag.config import RAGConfig
+    from src.rag.embeddings import EmbeddingProvider
 
 
 class VectorStore:
@@ -24,7 +26,7 @@ class VectorStore:
         self,
         embedding_provider: EmbeddingProvider,
         config: RAGConfig,
-        client: Optional[chromadb.ClientAPI] = None,
+        client: chromadb.ClientAPI | None = None,
     ) -> None:
         self._embeddings = embedding_provider
         self._config = config
@@ -85,9 +87,7 @@ class VectorStore:
         except Exception as e:
             return Err(f"ChromaDB add failed: {e}")
 
-    def search(
-        self, query: str, top_k: Optional[int] = None
-    ) -> Result[list[RetrievedChunk], str]:
+    def search(self, query: str, top_k: int | None = None) -> Result[list[RetrievedChunk], str]:
         """Search for similar chunks using vector similarity."""
         k = top_k or self._config.top_k
 

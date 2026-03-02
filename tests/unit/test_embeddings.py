@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from src.rag.embeddings import MockEmbeddingProvider, create_embedding_provider
 from src.rag.config import RAGConfig, RunMode
+from src.rag.embeddings import MockEmbeddingProvider, create_embedding_provider
 
 
 class TestMockEmbeddingProvider:

@@ -74,9 +74,7 @@ class TestEvaluateGeneration:
 
     def test_answer_relevance(self) -> None:
         answer = "Machine learning algorithms learn from data"
-        metrics = evaluate_generation(
-            answer, "machine learning algorithms", ["context"]
-        )
+        metrics = evaluate_generation(answer, "machine learning algorithms", ["context"])
         assert metrics.answer_relevance > 0.0
 
     def test_empty_context(self) -> None:

@@ -7,8 +7,7 @@ the ingestion, chunking, retrieval, and generation stages.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import uuid4
 
 
@@ -20,9 +19,7 @@ class Document:
     source: str
     metadata: dict[str, str | int | float | bool] = field(default_factory=dict)
     doc_id: str = field(default_factory=lambda: str(uuid4()))
-    created_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     def __post_init__(self) -> None:
         if not self.content.strip():
@@ -72,7 +69,5 @@ class GenerationResult:
     latency_ms: float
     token_usage: dict[str, int] = field(default_factory=dict)
     generation_id: str = field(default_factory=lambda: str(uuid4()))
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
-    context_window_used: Optional[int] = None
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    context_window_used: int | None = None
