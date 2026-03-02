@@ -78,7 +78,7 @@ class CrossEncoderReranker(BaseReranker):
     def _load_model(self) -> None:
         """Lazily load the CrossEncoder model."""
         try:
-            from sentence_transformers import CrossEncoder  # type: ignore[import-not-found]
+            from sentence_transformers import CrossEncoder
 
             self._model = CrossEncoder(self._model_name)
         except ImportError as exc:
@@ -188,7 +188,7 @@ class CohereReranker(BaseReranker):
     def _init_client(self) -> None:
         """Initialise the Cohere client."""
         try:
-            import cohere  # type: ignore[import-not-found]
+            import cohere
 
             self._client = cohere.Client(self._api_key)
         except ImportError as exc:
