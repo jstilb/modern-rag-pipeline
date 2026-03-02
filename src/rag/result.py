@@ -54,7 +54,7 @@ class Err(Generic[E]):
     def is_err(self) -> bool:
         return True
 
-    def unwrap(self) -> T:
+    def unwrap(self) -> T:  # type: ignore[type-var]
         raise ValueError(f"Called unwrap on Err: {self.error}")
 
     def unwrap_or(self, default: T) -> T:

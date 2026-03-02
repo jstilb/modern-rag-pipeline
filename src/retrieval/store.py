@@ -49,7 +49,7 @@ class VectorStore:
     @property
     def count(self) -> int:
         """Return the number of documents in the store."""
-        return self._collection.count()  # type: ignore[no-any-return]
+        return self._collection.count()
 
     def add_chunks(self, chunks: list[Chunk]) -> Result[int, str]:
         """Add chunks to the vector store."""
@@ -60,7 +60,7 @@ class VectorStore:
         embed_result = self._embeddings.embed_texts(texts)
 
         if embed_result.is_err():
-            return Err(f"Embedding failed: {embed_result.error}")
+            return Err(f"Embedding failed: {embed_result.error}")  # type: ignore[union-attr]
 
         embeddings = embed_result.unwrap()
 
@@ -79,9 +79,9 @@ class VectorStore:
         try:
             self._collection.add(
                 ids=ids,
-                embeddings=embeddings,
+                embeddings=embeddings,  # type: ignore[arg-type]
                 documents=texts,
-                metadatas=metadatas,
+                metadatas=metadatas,  # type: ignore[arg-type]
             )
             return Ok(len(chunks))
         except Exception as e:
@@ -93,15 +93,15 @@ class VectorStore:
 
         query_embed_result = self._embeddings.embed_query(query)
         if query_embed_result.is_err():
-            return Err(f"Query embedding failed: {query_embed_result.error}")
+            return Err(f"Query embedding failed: {query_embed_result.error}")  # type: ignore[union-attr]
 
         query_embedding = query_embed_result.unwrap()
 
         try:
             results = self._collection.query(
-                query_embeddings=[query_embedding],
+                query_embeddings=[query_embedding],  # type: ignore[arg-type]
                 n_results=min(k, self._collection.count()) if self._collection.count() > 0 else k,
-                include=["documents", "metadatas", "distances"],
+                include=["documents", "metadatas", "distances"],  # type: ignore[list-item]
             )
 
             if not results["documents"] or not results["documents"][0]:
