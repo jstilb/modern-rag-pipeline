@@ -89,7 +89,7 @@ class OpenAILLMProvider(LLMProvider):
         try:
             from langchain_openai import ChatOpenAI
 
-            llm = ChatOpenAI(
+            llm = ChatOpenAI(  # type: ignore[call-arg]
                 model=self._config.llm_model,
                 temperature=self._config.llm_temperature,
                 max_tokens=self._config.llm_max_tokens,

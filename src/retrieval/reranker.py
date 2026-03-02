@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
-from typing import Literal
+from typing import Any, Literal
 
 from src.rag.document import RetrievedChunk
 
@@ -70,7 +70,7 @@ class CrossEncoderReranker(BaseReranker):
     ) -> None:
         self._model_name = model_name
         self._mock_mode = mock_mode
-        self._model: object = None
+        self._model: Any = None
 
         if not mock_mode:
             self._load_model()
@@ -78,9 +78,11 @@ class CrossEncoderReranker(BaseReranker):
     def _load_model(self) -> None:
         """Lazily load the CrossEncoder model."""
         try:
-            from sentence_transformers import CrossEncoder  # type: ignore[import-untyped]
+            from sentence_transformers import (
+                CrossEncoder,  # type: ignore[import-untyped,import-not-found]
+            )
 
-            self._model = CrossEncoder(self._model_name)
+            self._model = CrossEncoder(self._model_name)  # type: ignore[no-untyped-call]
         except ImportError as exc:
             raise ImportError(
                 "sentence-transformers is required for CrossEncoderReranker. "
@@ -134,7 +136,7 @@ class CrossEncoderReranker(BaseReranker):
 
         # Real cross-encoder scoring
         pairs = [[query, c.chunk.content] for c in chunks]
-        raw_scores: list[float] = self._model.predict(pairs).tolist()  # type: ignore[union-attr]
+        raw_scores: list[float] = self._model.predict(pairs).tolist()
 
         # Normalise logit scores to [0, 1] via sigmoid
         import math
@@ -180,7 +182,7 @@ class CohereReranker(BaseReranker):
         self._model = model
         self._api_key = api_key or os.environ.get("COHERE_API_KEY", "")
         self._mock_mode = mock_mode
-        self._client: object = None
+        self._client: Any = None
 
         if not mock_mode:
             self._init_client()
@@ -188,7 +190,7 @@ class CohereReranker(BaseReranker):
     def _init_client(self) -> None:
         """Initialise the Cohere client."""
         try:
-            import cohere  # type: ignore[import-untyped]
+            import cohere  # type: ignore[import-untyped,import-not-found]
 
             self._client = cohere.Client(self._api_key)
         except ImportError as exc:
@@ -235,7 +237,7 @@ class CohereReranker(BaseReranker):
             ]
 
         documents = [c.chunk.content for c in chunks]
-        response = self._client.rerank(  # type: ignore[union-attr]
+        response = self._client.rerank(
             model=self._model,
             query=query,
             documents=documents,

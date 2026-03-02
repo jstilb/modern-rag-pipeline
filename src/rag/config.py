@@ -106,6 +106,6 @@ class MockConfig:
     @staticmethod
     def with_overrides(**kwargs: object) -> RAGConfig:
         """Create mock config with specific overrides."""
-        defaults = {"mode": RunMode.MOCK}
+        defaults: dict[str, object] = {"mode": RunMode.MOCK}
         defaults.update(kwargs)
         return RAGConfig(**defaults)  # type: ignore[arg-type]

@@ -92,7 +92,7 @@ class MockEmbeddingProvider(EmbeddingProvider):
         if norm > 0:
             base = base / norm
 
-        return base.tolist()
+        return base.tolist()  # type: ignore[no-any-return]
 
 
 class OpenAIEmbeddingProvider(EmbeddingProvider):
@@ -110,7 +110,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         try:
             from langchain_openai import OpenAIEmbeddings
 
-            embeddings_model = OpenAIEmbeddings(
+            embeddings_model = OpenAIEmbeddings(  # type: ignore[call-arg]
                 model=self._config.embedding_model,
                 openai_api_key=self._config.openai_api_key,
             )
@@ -125,7 +125,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         try:
             from langchain_openai import OpenAIEmbeddings
 
-            embeddings_model = OpenAIEmbeddings(
+            embeddings_model = OpenAIEmbeddings(  # type: ignore[call-arg]
                 model=self._config.embedding_model,
                 openai_api_key=self._config.openai_api_key,
             )

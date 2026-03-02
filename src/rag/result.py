@@ -32,14 +32,14 @@ class Ok(Generic[T]):
     def unwrap(self) -> T:
         return self.value
 
-    def unwrap_or(self, default: T) -> T:  # type: ignore[override]
+    def unwrap_or(self, default: T) -> T:
         return self.value
 
-    def map(self, fn: Callable[[T], U]) -> Result[U, E]:  # type: ignore[type-var]
+    def map(self, fn: Callable[[T], U]) -> Result[U, E]:
         return Ok(fn(self.value))
 
-    def map_err(self, fn: Callable[[E], U]) -> Result[T, U]:  # type: ignore[type-var]
-        return Ok(self.value)  # type: ignore[return-value]
+    def map_err(self, fn: Callable[[E], U]) -> Result[T, U]:
+        return Ok(self.value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,17 +54,17 @@ class Err(Generic[E]):
     def is_err(self) -> bool:
         return True
 
-    def unwrap(self) -> T:  # type: ignore[type-var]
+    def unwrap(self) -> T:
         raise ValueError(f"Called unwrap on Err: {self.error}")
 
-    def unwrap_or(self, default: T) -> T:  # type: ignore[type-var]
+    def unwrap_or(self, default: T) -> T:
         return default
 
-    def map(self, fn: Callable[[T], U]) -> Result[U, E]:  # type: ignore[type-var]
-        return Err(self.error)  # type: ignore[return-value]
+    def map(self, fn: Callable[[T], U]) -> Result[U, E]:
+        return Err(self.error)
 
-    def map_err(self, fn: Callable[[E], U]) -> Result[T, U]:  # type: ignore[type-var]
-        return Err(fn(self.error))  # type: ignore[return-value]
+    def map_err(self, fn: Callable[[E], U]) -> Result[T, U]:
+        return Err(fn(self.error))
 
 
 Result = Ok[T] | Err[E]

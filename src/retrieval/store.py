@@ -26,7 +26,7 @@ class VectorStore:
         self,
         embedding_provider: EmbeddingProvider,
         config: RAGConfig,
-        client: chromadb.ClientAPI | None = None,
+        client: chromadb.api.ClientAPI | None = None,
     ) -> None:
         self._embeddings = embedding_provider
         self._config = config
@@ -49,7 +49,7 @@ class VectorStore:
     @property
     def count(self) -> int:
         """Return the number of documents in the store."""
-        return self._collection.count()
+        return self._collection.count()  # type: ignore[no-any-return]
 
     def add_chunks(self, chunks: list[Chunk]) -> Result[int, str]:
         """Add chunks to the vector store."""
@@ -60,7 +60,7 @@ class VectorStore:
         embed_result = self._embeddings.embed_texts(texts)
 
         if embed_result.is_err():
-            return Err(f"Embedding failed: {embed_result.error}")  # type: ignore[union-attr]
+            return Err(f"Embedding failed: {embed_result.error}")
 
         embeddings = embed_result.unwrap()
 
@@ -79,9 +79,9 @@ class VectorStore:
         try:
             self._collection.add(
                 ids=ids,
-                embeddings=embeddings,  # type: ignore[arg-type]
+                embeddings=embeddings,
                 documents=texts,
-                metadatas=metadatas,  # type: ignore[arg-type]
+                metadatas=metadatas,
             )
             return Ok(len(chunks))
         except Exception as e:
@@ -93,7 +93,7 @@ class VectorStore:
 
         query_embed_result = self._embeddings.embed_query(query)
         if query_embed_result.is_err():
-            return Err(f"Query embedding failed: {query_embed_result.error}")  # type: ignore[union-attr]
+            return Err(f"Query embedding failed: {query_embed_result.error}")
 
         query_embedding = query_embed_result.unwrap()
 
@@ -109,18 +109,18 @@ class VectorStore:
 
             retrieved: list[RetrievedChunk] = []
             for i, doc in enumerate(results["documents"][0]):
-                metadata = results["metadatas"][0][i] if results["metadatas"] else {}  # type: ignore[index]
-                distance = results["distances"][0][i] if results["distances"] else 0.0  # type: ignore[index]
+                metadata = results["metadatas"][0][i] if results["metadatas"] else {}
+                distance = results["distances"][0][i] if results["distances"] else 0.0
 
                 # Convert cosine distance to similarity score
                 score = max(0.0, min(1.0, 1.0 - distance))
 
                 chunk = Chunk(
                     content=doc,
-                    doc_id=str(metadata.get("doc_id", "")),  # type: ignore[union-attr]
-                    chunk_index=int(metadata.get("chunk_index", 0)),  # type: ignore[union-attr]
-                    source=str(metadata.get("source", "")),  # type: ignore[union-attr]
-                    token_count=int(metadata.get("token_count", 0)),  # type: ignore[union-attr]
+                    doc_id=str(metadata.get("doc_id", "")),
+                    chunk_index=int(metadata.get("chunk_index", 0)),
+                    source=str(metadata.get("source", "")),
+                    token_count=int(metadata.get("token_count", 0)),
                 )
 
                 retrieved.append(
